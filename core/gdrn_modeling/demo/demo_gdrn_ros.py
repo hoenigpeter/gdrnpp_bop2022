@@ -21,9 +21,11 @@ from object_detector_msgs.srv import detectron2_service_server, estimate_poses, 
 from geometry_msgs.msg import Pose, Point, Quaternion
 from cv_bridge import CvBridge, CvBridgeError
 import tf
+from lib.render_vispy.renderer import RendererROS
+import queue
 
 class GDRN_ROS:
-    def __init__(self):
+    def __init__(self, renderer_request_queue, renderer_result_queue):
             intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
             self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
             self.gdrn_predictor = GdrnPredictor(
@@ -33,11 +35,12 @@ class GDRN_ROS:
                 path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/ycbv/models")
             )
 
+            self.renderer_request_queue = renderer_request_queue
+            self.renderer_result_queue = renderer_result_queue
             rospy.init_node("gdrn_estimation")
             s = rospy.Service("estimate_poses", estimate_poses, self.estimate_pose)
             print("Pose Estimation with GDRNet is ready.")
-
-            rospy.spin()
+            
 
     def estimate_pose(self, req):
         print("request detection...")
@@ -81,7 +84,11 @@ class GDRN_ROS:
 
         data_dict = self.gdrn_predictor.preprocessing(outputs=outputs, image=image, depth_img=depth_img)
         out_dict = self.gdrn_predictor.inference(data_dict)
-        poses = self.gdrn_predictor.postprocessing(data_dict, out_dict)
+        poses = self.gdrn_predictor.postprocessing(
+            data_dict,
+            out_dict,
+            self.renderer_request_queue, 
+            self.renderer_result_queue)
         #self.gdrn_predictor.gdrn_visualization(batch=data_dict, out_dict=out_dict, image=image)
 
         obj_name = self.gdrn_predictor.objs[int(obj_id)]
@@ -100,7 +107,7 @@ class GDRN_ROS:
         br.sendTransform((poses[obj_name][0][3], poses[obj_name][1][3], poses[obj_name][2][3]),
                      rot_quat,
                      rospy.Time.now(),
-                     "pose",
+                     f"pose_{obj_name}",
                      self.frame_id)
 
         estimates = []
@@ -126,6 +133,28 @@ class GDRN_ROS:
         return response 
     
 if __name__ == "__main__":
-    GDRN_ROS()
-    
+    renderer_request_queue = queue.Queue()
+    renderer_result_queue = queue.Queue()
 
+    GDRN_ROS(renderer_request_queue, renderer_result_queue)
+    
+    #TODO load from file
+    intrinsics = np.array([[538.391033533567, 0.0, 315.3074696331638],
+                            [0.0, 538.085452058436, 233.0483557773859], 
+                            [0.0, 0.0, 1.0]])
+    renderer = RendererROS((64, 64), intrinsics, model_paths=None, scale_to_meter=1.0, gpu_id=None)
+
+    while not rospy.is_shutdown():
+        if not renderer_request_queue.empty():
+            request = renderer_request_queue.get(block=True, timeout=0.2)
+
+            K_crop  = request[0]
+            model = request[1]
+            pose_est = request[2]
+            renderer.clear() 
+            renderer.set_cam(K_crop)
+            renderer.draw_model(model,pose_est)
+            _, ren_dp = renderer.finish()
+            renderer_result_queue.put(ren_dp)
+        else:
+            rospy.sleep(0.1)

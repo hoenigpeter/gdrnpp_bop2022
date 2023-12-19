@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from typing import Any
 
 import cv2
 import numpy as np
@@ -43,9 +44,91 @@ def singleton(cls):
 
     return get_instance
 
+class Renderer():
+    """
+    Deprecated in favor of RendererROS which uses Threading Queues to handle Threading-related issues 
+    caused by the need of vispy to render on the MainThread()
+    """
+
+    def __init__(self, size, cam, model_paths=None, scale_to_meter=1.0, gpu_id=None):
+        """
+        size: (width, height)
+        """
+        raise NotImplementedError
+
+    def _load_models(self, model_paths, scale_to_meter=1.0):
+        raise NotImplementedError
+
+    def set_cam(self, cam, clip_near=0.1, clip_far=100.0):
+        raise NotImplementedError
+
+    def clear(self, color=True, depth=True):
+        raise NotImplementedError
+
+    def setup_views(self):
+        raise NotImplementedError
+
+    def finish(self, only_color=False, to_255=False):
+        raise NotImplementedError
+
+    def compute_rotation(self, eye_point, look_point):
+        raise NotImplementedError
+
+    def _validate_pose(self, pose, rot_type="mat"):
+        raise NotImplementedError
+
+    def draw_detection_boundingbox(
+        self,
+        pose,
+        extents,
+        view="center",
+        is_gt=False,
+        thickness=1.5,
+        centroid=0,
+        rot_type="mat",
+    ):
+        
+        raise NotImplementedError
+
+    def draw_camera(
+        self,
+        pose=None,
+        color=[0, 1, 0],
+        scaler=1.0,
+        view="center",
+        rot_type="mat",
+    ):
+        raise NotImplementedError
+
+    def draw_pointcloud(self, points, colors=None, s_color=None, radius=1.0, view="center"):
+        raise NotImplementedError
+
+    def draw_background(self, image):
+        raise NotImplementedError
+        
+    def draw_model(
+        self,
+        model_or_id,
+        pose,
+        ambient=0.5,
+        specular=0,
+        shininess=1,
+        light_dir=(0, 0, -1),
+        light_col=(1, 1, 1),
+        view="center",
+        rot_type="mat",
+    ):
+        raise NotImplementedError
+
+    def show_scene(self, points, colors, models, poses):
+        raise NotImplementedError
+
+    def projective_matrix(self, cam, x0, y0, w, h, nc, fc):
+        raise NotImplementedError
+
 
 @singleton  # Don't throw GL context into trash when having more than one Renderer instance
-class Renderer(app.Canvas):
+class RendererROS(app.Canvas):
     """
     NOTE: internally convert RGB to BGR
     """

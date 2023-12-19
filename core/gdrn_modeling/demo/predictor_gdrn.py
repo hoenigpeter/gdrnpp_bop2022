@@ -24,7 +24,6 @@ from lib.utils.utils import iprint
 from lib.utils.time_utils import get_time_str
 from lib.utils.config_utils import try_get_key
 from lib.pysixd import inout, misc
-from lib.render_vispy.renderer import Renderer
 from lib.render_vispy.model3d import load_models
 
 from detectron2.structures import BoxMode
@@ -35,7 +34,9 @@ from torch.cuda.amp import autocast
 from types import SimpleNamespace
 from setproctitle import setproctitle
 from mmcv import Config
+from scipy.spatial.transform import Rotation
 
+import rospy
 from core.gdrn_modeling.models import (
     GDRN,
     GDRN_no_region,
@@ -61,8 +62,8 @@ class GdrnPredictor():
                                         'TEST.EVAL_PERIOD': 0,
                                         'TEST.VIS': False,
                                         'TEST.USE_PNP': True,
-                                        'TEST.USE_DEPTH_REFINE': False,
-                                        'TEST.USE_COOR_Z_REFINE': False,
+                                        'TEST.USE_DEPTH_REFINE': True,
+                                        'TEST.USE_COOR_Z_REFINE': True,
                                         'TEST.TEST_BBOX_TYPE': "est" # gt | est
                                     },
                                     eval_only=True,
@@ -179,7 +180,7 @@ class GdrnPredictor():
 
         return out_dict
 
-    def postprocessing(self, data_dict, out_dict):
+    def postprocessing(self, data_dict, out_dict, renderer_request_queue, renderer_result_queue):
         """
         Postprocess the gdrn model outputs
         Args:
@@ -213,7 +214,7 @@ class GdrnPredictor():
             data_dict["cur_res"].append(cur_res)
 
         if self.cfg.TEST.USE_DEPTH_REFINE:
-           self.process_depth_refine(data_dict, out_dict)
+           self.process_depth_refine(data_dict, out_dict, renderer_request_queue, renderer_result_queue)
 
         poses = {}
         for res in data_dict["cur_res"]:
@@ -224,7 +225,7 @@ class GdrnPredictor():
 
         return poses
 
-    def process_depth_refine(self, inputs, out_dict):
+    def process_depth_refine(self, inputs, out_dict, renderer_request_queue, renderer_result_queue):
         """
         Postprocess the gdrn result and refine with the depth information.
         Args:
@@ -247,7 +248,6 @@ class GdrnPredictor():
         zoom_K = batch_data_inference_roi(cfg, [inputs])['roi_zoom_K']
 
         out_i = -1
-        self.ren = Renderer(size=(64, 64), cam=self.cam)
       
         pub_sensor = rospy.Publisher('/depth_sensor_mask', Image, queue_size=10)
         pub_render = rospy.Publisher('/depth_render_mask', Image, queue_size=10)
@@ -273,9 +273,16 @@ class GdrnPredictor():
                 rot_est = out_rots[out_i]
                 trans_est = out_transes[out_i]
                 pose_est = np.hstack([rot_est, trans_est.reshape(3, 1)])
+                
+                rot_est = inputs["cur_res"][inst_i]["R"]
+                trans_est = inputs["cur_res"][inst_i]["t"]
+                pose_est = np.hstack([rot_est, trans_est.reshape(3,1)])
                 #depth_sensor_crop = _input['roi_depth'][inst_i].cpu().numpy().copy().squeeze()
                 depth_sensor_crop = cv2.resize(_input['roi_depth'][inst_i].cpu().numpy().copy().squeeze(), (64, 64))
                 depth_sensor_mask_crop = depth_sensor_crop > 0
+
+                #TODO find out why depth_sensor_corp does not have the correct scale
+                depth_sensor_crop = depth_sensor_crop * 10
 
                 depth_sensor_mask_crop_image = (depth_sensor_mask_crop * 255).astype(np.uint8)
                 depth_sensor_crop_ros = bridge.cv2_to_imgmsg(depth_sensor_mask_crop_image, encoding='passthrough')
@@ -283,18 +290,18 @@ class GdrnPredictor():
 
                 net_cfg = cfg.MODEL.POSE_NET
                 crop_res = net_cfg.OUTPUT_RES
-
-                for _ in range(cfg.TEST.DEPTH_REFINE_ITER):
-                    self.ren.clear()
-                    self.ren.set_cam(K_crop)
-                    self.ren.draw_model(self.ren_models[self.cls_names.index(cls_name)], pose_est)
-                    ren_im, ren_dp = self.ren.finish()
-                    print(ren_im)
+                for j in range(cfg.TEST.DEPTH_REFINE_ITER):
+                    renderer_request_queue.put([
+                        K_crop,
+                        self.ren_models[self.cls_names.index(cls_name)],
+                        pose_est
+                    ])
+                    
+                    while renderer_result_queue.empty():
+                        rospy.sleep(0.03)
+                    ren_dp = renderer_result_queue.get(block=True, timeout=0.2)
+                    
                     ren_mask = ren_dp > 0
-    
-                    depth_render_mask_crop_image = (ren_mask * 255).astype(np.uint8)
-                    depth_render_crop_ros = bridge.cv2_to_imgmsg(ren_dp, encoding='passthrough')
-                    pub_render.publish(depth_render_crop_ros)
 
                     if self.cfg.TEST.USE_COOR_Z_REFINE:
                         coor_np = xyz_i.numpy()
@@ -316,6 +323,7 @@ class GdrnPredictor():
                     query_img_norm /= norm_sum
                     norm_mask = query_img_norm > (query_img_norm.max() * 0.8)
                     yy, xx = np.argwhere(norm_mask).T  # 2 x (N,)
+
                     depth_diff = depth_sensor_crop[yy, xx] - ren_dp[yy, xx]
                     depth_adjustment = np.median(depth_diff)
 
@@ -330,6 +338,47 @@ class GdrnPredictor():
                     pose_est = np.hstack([rot_est, trans_est.reshape(3, 1)])
                 inputs["cur_res"][inst_i]["R"] = pose_est[:3,:3]
                 inputs["cur_res"][inst_i]["t"] = pose_est[:3,3]
+                self.publish_mesh_marker(cls_name, pose_est[:3, :3], pose_est[:3, 3])
+        
+    def publish_mesh_marker(self, cls_name, R_est, t_est):
+        from visualization_msgs.msg import Marker
+        vis_pub = rospy.Publisher("/gdrnet_meshes", Marker, latch=True)
+        model = self.ren_models[self.cls_names.index(cls_name)]
+        model_vertices = np.array(model.vertices)
+        model_colors = model.colors
+        marker = Marker()
+        marker.header.frame_id = 'head_rgbd_sensor_rgb_frame'
+        marker.header.stamp = rospy.Time.now()
+        marker.type = Marker.TRIANGLE_LIST
+        marker.ns = cls_name
+        marker.action = Marker.ADD
+        marker.pose.position.x = t_est[0]
+        marker.pose.position.y = t_est[1]
+        marker.pose.position.z = t_est[2]
+        quat = Rotation.from_matrix(R_est).as_quat()
+        marker.pose.orientation.x = quat[0]
+        marker.pose.orientation.y = quat[1]
+        marker.pose.orientation.z = quat[2]
+        marker.pose.orientation.w = quat[3]
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        from geometry_msgs.msg import Point
+        from std_msgs.msg import ColorRGBA
+        assert model_vertices.shape[0] == model_colors.shape[0]
+
+        # TRIANGLE_LIST needs 3*x points to render x triangles 
+        # => find biggest number smaller than model_vertices.shape[0] that is still divisible by 3
+        shape_vertices = 3*int((model_vertices.shape[0] - 1)/3)
+        for i in range(shape_vertices):
+            pt = Point(x = model_vertices[i, 0], y = model_vertices[i, 1], z = model_vertices[i, 2])
+            marker.points.append(pt)
+            rgb = ColorRGBA(r = 0, g = 0, b = 1, a = 1.0)
+            marker.colors.append(rgb)
+
+        vis_pub.publish(marker)
+        
+
 
     def normalize_image(self, cfg, image):
         """
