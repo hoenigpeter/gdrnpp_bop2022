@@ -12,7 +12,7 @@ cur_dir = osp.dirname(osp.abspath(__file__))
 sys.path.insert(0, osp.join(cur_dir, "../../../../"))
 PROJ_ROOT = osp.normpath(osp.join(cur_dir, "../../../.."))
 dataset_root = osp.join(PROJ_ROOT, 'datasets/BOP_DATASETS/ycbv')
-object_id_file = osp.join(dataset_root, 'data/ycbv.yaml')
+object_id_file = osp.join(PROJ_ROOT, 'configs/gdrn/ycbv/ycbv.yaml')
 import yaml
 import json
 

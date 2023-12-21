@@ -780,7 +780,7 @@ def test_render_many():
 def test_render_ycbv():
     ycbv_path = "datasets/BOP_DATASETS/ycbv"
     model_dir = osp.join(ycbv_path, "models")
-    file_path = osp.join(ycbv_path, 'data/ycbv.yaml')
+    file_path = 'configs/gdrn/ycbv/ycbv.yaml'
 
     K = np.array([[1066.778, 0.0, 312.9869], [0.0, 1067.487, 241.3109], [0.0, 0.0, 1.0]])
     width = 640
@@ -928,7 +928,7 @@ def test_render_many_ycbv():
     height = 480
     ZNEAR = 0.25
     ZFAR = 6.0
-    object_id_file = osp.join(PROJ_ROOT, 'datasets/BOP_DATASETS/ycbv/data/ycbv.yaml')
+    object_id_file = osp.join(PROJ_ROOT, 'configs/gdrn/ycbv/ycbv.yaml')
     with open(object_id_file, 'r') as stream:
         data_loaded = yaml.safe_load(stream)
     IDX2CLASS = data_loaded["names"]

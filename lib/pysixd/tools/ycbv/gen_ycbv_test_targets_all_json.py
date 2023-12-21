@@ -8,7 +8,7 @@ PROJ_ROOT = osp.normpath(osp.join(cur_dir, "../../../.."))
 
 data_root = "datasets/BOP_DATASETS/ycbv"
 ycbv_path = osp.join(PROJ_ROOT, data_root)
-object_id_file = osp.join(ycbv_path, 'data/ycbv.yaml')
+object_id_file = osp.join(PROJ_ROOT, 'configs/gdrn/ycbv/ycbv.yaml')
 with open(object_id_file, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 IDX2CLASS = data_loaded['names']

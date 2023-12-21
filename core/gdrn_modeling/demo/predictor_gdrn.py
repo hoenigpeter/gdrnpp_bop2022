@@ -81,7 +81,7 @@ class GdrnPredictor():
 
         #set your trained object names
         # Test one higher
-        object_id_file = osp.join(PROJ_ROOT, 'datasets/BOP_DATASETS/ycbv/data/ycbv.yaml')
+        object_id_file = osp.join(PROJ_ROOT, 'configs/gdrn/ycbv/ycbv.yaml')
         with open(object_id_file, 'r') as stream:
             data_loaded = yaml.safe_load(stream)
         self.objs = data_loaded['names']

@@ -672,7 +672,7 @@ def test_render_many():
 def test_render_ycbv():
     ycbv_dir = "datasets/BOP_DATASETS/ycbv"
     model_dir = osp.join(ycbv_dir, "models")
-    file_path = osp.join(ycbv_dir, 'data/ycbv.yaml')
+    file_path = 'configs/gdrn/ycbv/ycbv.yaml'
 
     K = np.array([[1066.778, 0.0, 312.9869], [0.0, 1067.487, 241.3109], [0.0, 0.0, 1.0]])
     width = 640
@@ -801,7 +801,7 @@ def test_render_many_ycbv():
     
     ycbv_dir = "datasets/BOP_DATASETS/ycbv"
     model_dir = osp.join(ycbv_dir, "models")
-    file_path = osp.join(ycbv_dir, 'data/ycbv.yaml')
+    file_path = 'configs/gdrn/ycbv/ycbv.yaml'
 
     K = np.array([[1066.778, 0.0, 312.9869], [0.0, 1067.487, 241.3109], [0.0, 0.0, 1.0]])
     width = 640

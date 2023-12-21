@@ -41,7 +41,7 @@ model_scaled_simple_dir = osp.join(dataset_root, "models_rescaled")  # m, .obj
 vertex_scale = 0.001
 
 # object info
-object_id_file = osp.join(dataset_root, 'data/ycbv.yaml')
+object_id_file = osp.join(root_dir, 'configs/gdrn/ycbv/ycbv.yaml')
 with open(object_id_file, 'r') as stream:
     data_loaded = yaml.safe_load(stream)
 id2obj = data_loaded['names']
