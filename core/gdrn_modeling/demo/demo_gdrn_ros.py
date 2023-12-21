@@ -130,7 +130,7 @@ class GDRN_ROS:
         elapsed_time = end_time - start_time
         print('Execution time:', elapsed_time, 'seconds')
         print()
-        return response 
+        return response
     
 if __name__ == "__main__":
     renderer_request_queue = queue.Queue()
@@ -138,10 +138,8 @@ if __name__ == "__main__":
 
     GDRN_ROS(renderer_request_queue, renderer_result_queue)
     
-    #TODO load from file
-    intrinsics = np.array([[538.391033533567, 0.0, 315.3074696331638],
-                            [0.0, 538.085452058436, 233.0483557773859], 
-                            [0.0, 0.0, 1.0]])
+    # Load camera intrinsics from file
+    intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
     renderer = RendererROS((64, 64), intrinsics, model_paths=None, scale_to_meter=1.0, gpu_id=None)
 
     while not rospy.is_shutdown():

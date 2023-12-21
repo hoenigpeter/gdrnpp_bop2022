@@ -110,6 +110,8 @@ RUN /bin/bash -c  '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin conf
 # clone and build message and service definitions
 RUN /bin/bash -c 'cd /root/catkin_ws/src; \
                   git clone https://github.com/v4r-tuwien/object_detector_msgs.git'
+RUN /bin/bash -c 'cd /root/catkin_ws/src; \
+                  git clone https://gitlab.informatik.uni-bremen.de/robokudo/robokudo_msgs.git'
 RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin build'
 
 WORKDIR /root
