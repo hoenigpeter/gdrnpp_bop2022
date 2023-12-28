@@ -20,17 +20,18 @@ train.amp.enabled = True
 model.backbone.depth = 1.33
 model.backbone.width = 1.25
 
-model.head.num_classes = 8
+model.head.num_classes = 30
 
 train.init_checkpoint = "pretrained_models/yolox/yolox_x.pth"
 
 # datasets
-#DATASETS.TRAIN = ["lmo_pbr_train"]
-DATASETS.TRAIN = ["lmo_bop_test"]
-DATASETS.TEST = ["lmo_bop_test"]
+DATASETS.TRAIN = ["tless_random_texture_pbr_train"]
+DATASETS.TEST = ["tless_bop_test_primesense"]
 
 dataloader.train.dataset.lst.names = DATASETS.TRAIN
-dataloader.train.total_batch_size = 16
+dataloader.train.total_batch_size = 8
+
+aug_percentage = 0.4
 
 # color aug
 dataloader.train.aug_wrapper.COLOR_AUG_PROB = 0.8
@@ -40,25 +41,27 @@ dataloader.train.aug_wrapper.COLOR_AUG_CODE = (
     # Sometimes(0.5, PerspectiveTransform(0.05)),
     # Sometimes(0.5, CropAndPad(percent=(-0.05, 0.1))),
     # Sometimes(0.5, Affine(scale=(1.0, 1.2))),
-    "Sometimes(0.5, CoarseDropout( p=0.2, size_percent=0.05) ),"
-    "Sometimes(0.4, GaussianBlur((0., 3.))),"
-    "Sometimes(0.3, pillike.EnhanceSharpness(factor=(0., 50.))),"
-    "Sometimes(0.3, pillike.EnhanceContrast(factor=(0.2, 50.))),"
-    "Sometimes(0.5, pillike.EnhanceBrightness(factor=(0.1, 6.))),"
-    "Sometimes(0.3, pillike.EnhanceColor(factor=(0., 20.))),"
-    "Sometimes(0.5, Add((-25, 25), per_channel=0.3)),"
-    "Sometimes(0.3, Invert(0.2, per_channel=True)),"
-    "Sometimes(0.5, Multiply((0.6, 1.4), per_channel=0.5)),"
-    "Sometimes(0.5, Multiply((0.6, 1.4))),"
-    "Sometimes(0.1, AdditiveGaussianNoise(scale=10, per_channel=True)),"
-    "Sometimes(0.5, iaa.contrast.LinearContrast((0.5, 2.2), per_channel=0.3)),"
+    f"Sometimes({0.5 * aug_percentage}, CoarseDropout( p=0.2, size_percent=0.05) ),"
+    f"Sometimes({0.4 * aug_percentage}, GaussianBlur((0., 3.))),"
+    f"Sometimes({0.3 * aug_percentage}, pillike.EnhanceSharpness(factor=(0., 50.))),"
+    f"Sometimes({0.3 * aug_percentage}, pillike.EnhanceContrast(factor=(0.2, 50.))),"
+    f"Sometimes({0.5 * aug_percentage}, pillike.EnhanceBrightness(factor=(0.1, 6.))),"
+    f"Sometimes({0.3 * aug_percentage}, pillike.EnhanceColor(factor=(0., 20.))),"
+    f"Sometimes({0.5 * aug_percentage}, Add((-25, 25), per_channel=0.3)),"
+    f"Sometimes({0.3 * aug_percentage}, Invert(0.2, per_channel=True)),"
+    f"Sometimes({0.5 * aug_percentage}, Multiply((0.6, 1.4), per_channel=0.5)),"
+    f"Sometimes({0.5 * aug_percentage}, Multiply((0.6, 1.4))),"
+    f"Sometimes({0.1 * aug_percentage}, AdditiveGaussianNoise(scale=10, per_channel=True)),"
+    f"Sometimes({0.5 * aug_percentage}, iaa.contrast.LinearContrast((0.5, 2.2), per_channel=0.3)),"
     # "Sometimes(0.5, Grayscale(alpha=(0.0, 1.0))),"  # maybe remove for det
     "], random_order=True)"
     # cosy+aae
 )
 
+print(dataloader.train.aug_wrapper.COLOR_AUG_CODE)
+
 # hsv color aug
-dataloader.train.aug_wrapper.AUG_HSV_PROB = 1.0
+dataloader.train.aug_wrapper.AUG_HSV_PROB = 1.0 * aug_percentage
 dataloader.train.aug_wrapper.HSV_H = 0.015
 dataloader.train.aug_wrapper.HSV_S = 0.7
 dataloader.train.aug_wrapper.HSV_V = 0.4

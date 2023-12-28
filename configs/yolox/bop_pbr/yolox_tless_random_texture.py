@@ -25,7 +25,8 @@ model.head.num_classes = 30
 train.init_checkpoint = "pretrained_models/yolox/yolox_x.pth"
 
 # datasets
-DATASETS.TRAIN = ["tless_random_texture_pbr_train"]
+#DATASETS.TRAIN = ["tless_random_texture_pbr_train"]
+DATASETS.TRAIN = ["tless_bop_test_primesense"]
 DATASETS.TEST = ["tless_bop_test_primesense"]
 
 dataloader.train.dataset.lst.names = DATASETS.TRAIN
