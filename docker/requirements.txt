@@ -20,6 +20,7 @@ ipdb
 tqdm
 numba
 mmcv==1.7.0
+yapf==0.40.1
 imagecorruptions
 pyassimp==4.1.3  # 4.1.4 will cause egl_renderer SegmentFault
 pypng
