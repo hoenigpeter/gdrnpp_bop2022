@@ -49,7 +49,6 @@ DATASETS = dict(
     DET_FILES_TEST=("datasets/BOP_DATASETS/ycbv/test/test_bboxes/yolox_x_640_ycbv_real_pbr_ycbv_bop_test.json",),
     SYM_OBJS=[
         "024_bowl",
-        "036_wood_block",
         "051_large_clamp",
         "052_extra_large_clamp",
         "061_foam_brick",

@@ -97,8 +97,8 @@ DATASETS = dict(
     INIT_POSE_TOPK_PER_IM=30,  # TODO: implement this
     INIT_POSE_THR=0.0,  # filter detections
     # NOTE: override if symmetric objects are different, used for custom evaluator
-    # SYM_OBJS=["024_bowl", "036_wood_block", "051_large_clamp", "052_extra_large_clamp", "061_foam_brick"],  # ycbv
-    # SYM_OBJS=["002_master_chef_can", "024_bowl", "025_mug", "036_wood_block", "040_large_marker", "051_large_clamp",
+    # SYM_OBJS=["024_bowl", "051_large_clamp", "052_extra_large_clamp", "061_foam_brick"],  # ycbv
+    # SYM_OBJS=["002_master_chef_can", "024_bowl", "025_mug", "040_large_marker", "051_large_clamp",
     #           "052_extra_large_clamp", "061_foam_brick"],  # ycbv_bop
     SYM_OBJS=["bowl", "cup", "eggbox", "glue"],
     EVAL_SCENE_IDS=None,  # specify eval scene ids, e.g.[1,2,3,4]
