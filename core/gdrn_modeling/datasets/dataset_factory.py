@@ -30,7 +30,9 @@ from core.gdrn_modeling.datasets import (
     lmo_3r_pbr,
     lmo_3r_1o_pbr,
     lmo_5r_pbr,
-    lmo_5r_1o_pbr
+    lmo_5r_1o_pbr,
+    ycb_ichores_pbr,
+    ycb_ichores_test
 )  # noqa
 
 cur_dir = osp.dirname(osp.abspath(__file__))
@@ -70,7 +72,9 @@ _DSET_MOD_NAMES = [
     "lmo_3r_pbr",
     "lmo_3r_1o_pbr",
     "lmo_5r_pbr",
-    "lmo_5r_1o_pbr"
+    "lmo_5r_1o_pbr",
+    "ycb_ichores_pbr",
+    "ycb_ichores_test"
 ]
 
 logger = logging.getLogger(__name__)

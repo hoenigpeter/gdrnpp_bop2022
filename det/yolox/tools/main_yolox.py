@@ -30,6 +30,7 @@ from det.yolox.engine.yolox_trainer import YOLOX_DefaultTrainer
 from det.yolox.utils import fuse_model
 from det.yolox.data.datasets.dataset_factory import register_datasets_in_cfg
 
+import json
 
 logger = logging.getLogger("detectron2")
 
@@ -47,6 +48,10 @@ def setup(args):
 @loguru_logger.catch
 def main(args):
     cfg = setup(args)
+    print(cfg)
+    print(cfg["train"]["output_dir"])
+    print(cfg["DATASETS"]["TEST"][0])
+
     Trainer = YOLOX_DefaultTrainer
     if args.eval_only:  # eval
         model = Trainer.build_model(cfg)
@@ -58,6 +63,11 @@ def main(args):
             model = fuse_model(model)
         res = Trainer.test(cfg, model)
         # import ipdb; ipdb.set_trace()
+        
+        print(cfg["train"]["output_dir"] + "/inference/" + cfg["DATASETS"]["TEST"][0] + "/" + "map_result.json")
+        with open(cfg["train"]["output_dir"] + "/inference/" + cfg["DATASETS"]["TEST"][0] + "/" + "map_result.json", "w") as outfile:
+            json.dump(res, outfile)
+
         return res
     # train
     trainer = Trainer(cfg)
