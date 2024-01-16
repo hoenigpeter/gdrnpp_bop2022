@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 DATASETS_ROOT = osp.normpath(osp.join(PROJ_ROOT, "datasets"))
 
 
-class YCB_ICHORES_PBR_Dataset:
+class YCB_ICHORES_TEST_Dataset:
     def __init__(self, data_cfg):
         """
         Set with_depth and with_masks default to True,
@@ -39,9 +39,8 @@ class YCB_ICHORES_PBR_Dataset:
 
         self.dataset_root = data_cfg.get(
             "dataset_root",
-            osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/train_pbr"),
+            osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/test"),
         )
-        self.xyz_root = data_cfg.get("xyz_root", osp.join(self.dataset_root, "xyz_crop"))
         assert osp.exists(self.dataset_root), self.dataset_root
         self.models_root = data_cfg["models_root"]
         self.scale_to_meter = data_cfg["scale_to_meter"]  # 0.001
@@ -183,8 +182,6 @@ class YCB_ICHORES_PBR_Dataset:
 
                     visib_fract = gt_info_dict[str_im_id][anno_i].get("visib_fract", 1.0)
 
-                    xyz_path = osp.join(self.xyz_root, f"{scene_id:06d}/{int_im_id:06d}_{anno_i:06d}-xyz.pkl")
-                    # assert osp.exists(xyz_path), xyz_path
                     inst = {
                         "category_id": cur_label,  # 0-based label
                         "bbox": bbox_visib,  # TODO: load both bbox_obj and bbox_visib
@@ -197,12 +194,10 @@ class YCB_ICHORES_PBR_Dataset:
                         "segmentation": mask_rle,
                         "mask_full": mask_full_rle,  # TODO: load as mask_full, rle
                         "visib_fract": visib_fract,
-                        "xyz_path": xyz_path,
                     }
 
                     model_info = self.models_info[str(obj_id)]
                     inst["model_info"] = model_info
-                    # TODO: using full mask and full xyz
                     for key in ["bbox3d_and_center"]:
                         inst[key] = self.models[cur_label][key]
                     insts.append(inst)
@@ -299,13 +294,12 @@ ycb_ichores_model_root = "BOP_DATASETS/ycb_ichores/models/"
 ################################################################################
 
 
-SPLITS_YCB_ICHORES_PBR = dict(
-    ycb_ichores_train_pbr=dict(
+SPLITS_YCB_ICHORES_TEST = dict(
+    ycb_ichores_test=dict(
         name="ycb_ichores_train_pbr",
         objs=ref.ycb_ichores.objects,  # selected objects
-        dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/train_pbr"),
+        dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/test"),
         models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/models"),
-        xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/ycb_ichores/train_pbr/xyz_crop"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
@@ -387,58 +381,6 @@ def test_vis():
         kpts_2d = [misc.project_pts(kpt3d, K, R, t) for kpt3d, R, t in zip(kpts_3d_list, Rs, transes)]
 
         labels = [objs[cat_id] for cat_id in cat_ids]
-        for _i in range(len(annos)):
-            img_vis = vis_image_mask_bbox_cv2(
-                img,
-                masks[_i : _i + 1],
-                bboxes=bboxes_xyxy[_i : _i + 1],
-                labels=labels[_i : _i + 1],
-            )
-            img_vis_kpts2d = misc.draw_projected_box3d(img_vis.copy(), kpts_2d[_i])
-            xyz_path = annos[_i]["xyz_path"]
-            xyz_info = mmcv.load(xyz_path)
-            x1, y1, x2, y2 = xyz_info["xyxy"]
-            xyz_crop = xyz_info["xyz_crop"].astype(np.float32)
-            xyz = np.zeros((imH, imW, 3), dtype=np.float32)
-            xyz[y1 : y2 + 1, x1 : x2 + 1, :] = xyz_crop
-            xyz_show = get_emb_show(xyz)
-            xyz_crop_show = get_emb_show(xyz_crop)
-            img_xyz = img.copy() / 255.0
-            mask_xyz = ((xyz[:, :, 0] != 0) | (xyz[:, :, 1] != 0) | (xyz[:, :, 2] != 0)).astype("uint8")
-            fg_idx = np.where(mask_xyz != 0)
-            img_xyz[fg_idx[0], fg_idx[1], :] = xyz_show[fg_idx[0], fg_idx[1], :3]
-            img_xyz_crop = img_xyz[y1 : y2 + 1, x1 : x2 + 1, :]
-            img_vis_crop = img_vis[y1 : y2 + 1, x1 : x2 + 1, :]
-            # diff mask
-            diff_mask_xyz = np.abs(masks[_i] - mask_xyz)[y1 : y2 + 1, x1 : x2 + 1]
-
-            grid_show(
-                [
-                    img[:, :, [2, 1, 0]],
-                    img_vis[:, :, [2, 1, 0]],
-                    img_vis_kpts2d[:, :, [2, 1, 0]],
-                    depth,
-                    # xyz_show,
-                    diff_mask_xyz,
-                    xyz_crop_show,
-                    img_xyz[:, :, [2, 1, 0]],
-                    img_xyz_crop[:, :, [2, 1, 0]],
-                    img_vis_crop,
-                ],
-                [
-                    "img",
-                    "vis_img",
-                    "img_vis_kpts2d",
-                    "depth",
-                    "diff_mask_xyz",
-                    "xyz_crop_show",
-                    "img_xyz",
-                    "img_xyz_crop",
-                    "img_vis_crop",
-                ],
-                row=3,
-                col=3,
-            )
 
 
 if __name__ == "__main__":

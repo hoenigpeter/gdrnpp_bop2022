@@ -32,28 +32,26 @@ vertex_scale = 0.001
 
 # object info
 id2obj = {
-    0: "001_chips_can",  # Add your coordinates here
-    1: "002_master_chef_can",  # Add your coordinates here
-    2: "003_cracker_box",  # Add your coordinates here
-    3: "004_sugar_box",  # Add your coordinates here
-    4: "005_tomato_soup_can",  # Add your coordinates here
-    5: "006_mustard_bottle",  # Add your coordinates here
-    6: "008_pudding_box",  # Add your coordinates here
-    7: "009_gelatin_box",  # Add your coordinates here
-    8: "010_potted_meat_can",  # Add your coordinates here
-    9: "011_banana",  # Add your coordinates here
-    10: "013_apple",  # Add your coordinates here
-    11: "014_lemon",  # Add your coordinates here
-    12: "015_peach",  # Add your coordinates here
-    13: "016_pear",  # Add your coordinates here
-    14: "017_orange",  # Add your coordinates here
-    15: "018_plum",  # Add your coordinates here
-    16: "021_bleach_cleanser",  # Add your coordinates here
-    17: "022_windex_bottle",  # Add your coordinates here
-    18: "023_wine_glass",  # Add your coordinates here
-    19: "024_bowl",  # Add your coordinates here
-    20: "025_mug",  # Add your coordinates here
-    21: "029_plate"  # Add your coordinates here
+    1: "001_chips_can",  # Add your coordinates here
+    2: "002_master_chef_can",  # Add your coordinates here
+    3: "003_cracker_box",  # Add your coordinates here
+    4: "004_sugar_box",  # Add your coordinates here
+    5: "005_tomato_soup_can",  # Add your coordinates here
+    6: "006_mustard_bottle",  # Add your coordinates here
+    7: "008_pudding_box",  # Add your coordinates here
+    8: "009_gelatin_box",  # Add your coordinates here
+    9: "010_potted_meat_can",  # Add your coordinates here
+    10: "011_banana",  # Add your coordinates here
+    11: "013_apple",  # Add your coordinates here
+    12: "014_lemon",  # Add your coordinates here
+    13: "015_peach",  # Add your coordinates here
+    14: "016_pear",  # Add your coordinates here
+    15: "017_orange",  # Add your coordinates here
+    16: "018_plum",  # Add your coordinates here
+    17: "021_bleach_cleanser",  # Add your coordinates here
+    18: "024_bowl",  # Add your coordinates here
+    19: "025_mug",  # Add your coordinates here
+    20: "029_plate"  # Add your coordinates here
 }
 objects = list(id2obj.values())
 

@@ -32,8 +32,8 @@ INPUT = dict(
 )
 
 SOLVER = dict(
-    IMS_PER_BATCH=48,
-    TOTAL_EPOCHS=40,  # 10
+    IMS_PER_BATCH=24,
+    TOTAL_EPOCHS=10,  # 10
     LR_SCHEDULER_NAME="flat_and_anneal",
     ANNEAL_METHOD="cosine",  # "cosine"
     ANNEAL_POINT=0.72,
@@ -63,7 +63,7 @@ MODEL = dict(
     POSE_NET=dict(
         NAME="GDRN_double_mask",
         XYZ_ONLINE=True,
-        NUM_CLASSES=21,
+        NUM_CLASSES=20,
         BACKBONE=dict(
             FREEZE=False,
             PRETRAINED="timm",
