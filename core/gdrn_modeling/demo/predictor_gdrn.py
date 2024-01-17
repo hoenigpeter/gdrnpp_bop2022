@@ -53,7 +53,8 @@ class GdrnPredictor():
                  ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrn/lmo_pbr/convnext_a6_AugCosyAAEGray_BG05_mlL1_DMask_amodalClipBox_classAware_lmo/model_final.pth"),
                  #camera_json_path=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/lmo/camera.json"),
                  camera_intrinsics=[],
-                 path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/lmo/models")
+                 path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/lmo/models"),
+                 model_string="lmo"
                  ):
 
         self.args = SimpleNamespace(config_file=config_file_path,
@@ -81,10 +82,11 @@ class GdrnPredictor():
 
         #set your trained object names
         # Test one higher
-        object_id_file = osp.join(PROJ_ROOT, 'configs/gdrn/ycbv/ycbv.yaml')
-        with open(object_id_file, 'r') as stream:
-            data_loaded = yaml.safe_load(stream)
-        self.objs = data_loaded['names']
+        if model_string == "ycbv" or model_string == "ycb_ichores":
+            object_id_file = osp.join(osp.join(osp.join(PROJ_ROOT, f'configs/gdrn'), model_string), model_string + '.yaml')
+            with open(object_id_file, 'r') as stream:
+                data_loaded = yaml.safe_load(stream)
+            self.objs = data_loaded['names']
 
         self.cls_names = [i for i in self.objs.values()]
         self.obj_ids = [i for i in self.objs.keys()]
