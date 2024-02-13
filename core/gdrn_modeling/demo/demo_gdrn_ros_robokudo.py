@@ -8,7 +8,7 @@ sys.path.insert(0, PROJ_ROOT)
 
 from predictor_gdrn import GdrnPredictor
 import os
-
+import argparse
 import time
 
 import cv2
@@ -28,14 +28,15 @@ from lib.render_vispy.renderer import RendererROS
 import queue
 
 class GDRN_ROS:
-    def __init__(self, renderer_request_queue, renderer_result_queue):
+    def __init__(self, renderer_request_queue, renderer_result_queue, model_file):
             intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
             self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
             self.gdrn_predictor = GdrnPredictor(
-                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/ycbv/ycbv_inference.py"),
-                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrn/ycbv/gdrnpp_ycbv_weights.pth"),
+                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + model_file + "/" + model_file +"_inference.py"),
+                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrn/" + model_file + "/gdrnpp_" + model_file + "_weights.pth"),
                 camera_intrinsics=intrinsics,
-                path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/ycbv/models")
+                path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/" + model_file + "/models"),
+                model_string=model_file
             )
 
             self.renderer_request_queue = renderer_request_queue
@@ -154,12 +155,19 @@ class GDRN_ROS:
         elapsed_time = end_time - start_time
         print('Execution time:', elapsed_time, 'seconds')
         self.server.set_succeeded(response)
-    
+
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_file', type=str, default='ycbv', help='model path name')
+    opt = parser.parse_args()
+    return opt
+
 if __name__ == "__main__":
+    opt = parse_opt()
     renderer_request_queue = queue.Queue()
     renderer_result_queue = queue.Queue()
 
-    GDRN_ROS(renderer_request_queue, renderer_result_queue)
+    GDRN_ROS(renderer_request_queue, renderer_result_queue, **vars(opt))
     
     # Load camera intrinsics from file
     intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
