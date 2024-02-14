@@ -76,7 +76,7 @@ class GdrnPredictor():
                                     num_gpus=1,
                                     )
 
-
+        self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
         self.cfg = self.setup(self.args)
         self.objs_dir = path_to_obj_models
 
@@ -332,7 +332,7 @@ class GdrnPredictor():
         model_vertices = np.array(model.vertices)
         model_colors = model.colors
         marker = Marker()
-        marker.header.frame_id = 'head_rgbd_sensor_rgb_frame'
+        marker.header.frame_id = self.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = Marker.TRIANGLE_LIST
         marker.ns = cls_name
