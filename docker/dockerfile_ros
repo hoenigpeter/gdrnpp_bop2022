@@ -24,6 +24,7 @@ RUN sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) 
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 
 RUN pip install tensorboard cmake onnx   # cmake from apt-get is too old
+RUN pip install setuptools==69.5.1
 RUN pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
 RUN pip install 'git+https://github.com/facebookresearch/fvcore'
 
@@ -111,6 +112,8 @@ RUN /bin/bash -c  '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin conf
 # clone and build message and service definitions
 RUN /bin/bash -c 'cd /root/catkin_ws/src; \
                   git clone https://github.com/v4r-tuwien/object_detector_msgs.git'
+RUN /bin/bash -c 'cd /root/catkin_ws/src; \
+                  git clone https://gitlab.informatik.uni-bremen.de/robokudo/robokudo_msgs.git'
 RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; cd /root/catkin_ws; catkin build'
 
 WORKDIR /root

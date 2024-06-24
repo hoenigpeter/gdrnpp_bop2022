@@ -32,6 +32,8 @@ from lib.vis_utils.image import grid_show, vis_image_bboxes_cv2, vis_image_mask_
 from .engine_utils import batch_data, get_out_coor, get_out_mask, batch_data_inference_roi
 from .test_utils import eval_cached_results, save_and_eval_results, to_list
 
+from lib.render_vispy.model3d import load_models
+from lib.render_vispy.renderer import Renderer
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +64,6 @@ class GDRN_Evaluator(DatasetEvaluator):
             inout.load_ply(model_path, vertex_scale=self.data_ref.vertex_scale) for model_path in self.model_paths
         ]
         if cfg.DEBUG or cfg.TEST.USE_DEPTH_REFINE:
-            from lib.render_vispy.model3d import load_models
-            from lib.render_vispy.renderer import Renderer
-
             if cfg.TEST.USE_DEPTH_REFINE:
                 net_cfg = cfg.MODEL.POSE_NET
                 width = net_cfg.OUTPUT_RES
@@ -513,7 +512,10 @@ class GDRN_Evaluator(DatasetEvaluator):
                 trans_est = out_transes[out_i]
                 pose_est = np.hstack([rot_est, trans_est.reshape(3, 1)])
                 #depth_sensor_crop = _input['roi_depth'][inst_i].cpu().numpy().copy().squeeze()
-                depth_sensor_crop = cv2.resize(_input['roi_depth'][inst_i][-1].cpu().numpy().copy().squeeze(), (self.out_res, self.out_res))
+
+                #depth_sensor_crop = cv2.resize(_input['roi_depth'][inst_i][-1].cpu().numpy().copy().squeeze(), (64, 64))
+                depth_sensor_crop = cv2.resize(_input['roi_depth'][inst_i][-1].cpu().numpy().copy().squeeze(), (64, 64))
+
                 depth_sensor_mask_crop = depth_sensor_crop > 0
 
                 net_cfg = cfg.MODEL.POSE_NET
@@ -525,6 +527,7 @@ class GDRN_Evaluator(DatasetEvaluator):
                     self.ren.draw_model(self.ren_models[self.data_ref.objects.index(cls_name)], pose_est)
                     ren_im, ren_dp = self.ren.finish()
                     ren_mask = ren_dp > 0
+
 
                     if self.cfg.TEST.USE_COOR_Z_REFINE:
                         coor_np = xyz_i.numpy()
@@ -548,8 +551,6 @@ class GDRN_Evaluator(DatasetEvaluator):
                     yy, xx = np.argwhere(norm_mask).T  # 2 x (N,)
                     depth_diff = depth_sensor_crop[yy, xx] - ren_dp[yy, xx]
                     depth_adjustment = np.median(depth_diff)
-
-
 
                     yx_coords = np.meshgrid(np.arange(crop_res), np.arange(crop_res))
                     yx_coords = np.stack(yx_coords[::-1], axis=-1)  # (crop_res, crop_res, 2yx)

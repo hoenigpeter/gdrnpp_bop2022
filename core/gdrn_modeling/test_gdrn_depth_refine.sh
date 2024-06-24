@@ -20,7 +20,7 @@ NCCL_DEBUG=INFO
 OMP_NUM_THREADS=1
 MKL_NUM_THREADS=1
 PYTHONPATH="$this_dir/../..":$PYTHONPATH \
-CUDA_VISIBLE_DEVICES=$2 python $this_dir/main_gdrn.py \
+CUDA_VISIBLE_DEVICES=$2 python3 $this_dir/main_gdrn.py \
     --config-file $CFG --num-gpus $NGPU --eval-only \
     --opts MODEL.WEIGHTS=$CKPT INPUT.WITH_DEPTH=True TEST.USE_DEPTH_REFINE=True \
     ${@:4}
