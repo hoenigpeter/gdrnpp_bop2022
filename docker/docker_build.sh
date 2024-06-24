@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build --rm -t gdrnpp .
+docker build --rm -t gdrnpp_base .

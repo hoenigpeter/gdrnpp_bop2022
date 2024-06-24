@@ -1,12 +1,12 @@
-# about 3 days
 _base_ = ["../../_base_/gdrn_base.py"]
 
-OUTPUT_DIR = "output/gdrn/ycbv_random_texture/convnext_a6_AugCosyAAEGray_BG05_mlL1_DMask_amodalClipBox_classAware_ycbv_random_texture"
+OUTPUT_DIR = "output/gdrn/tless_random_texture/gdrnpp_tless_random_texture"
 INPUT = dict(
     DZI_PAD_SCALE=1.5,
     TRUNCATE_FG=True,
     CHANGE_BG_PROB=0.5,
     COLOR_AUG_PROB=0.8,
+    IMG_AUG_RESIZE=False,
     COLOR_AUG_TYPE="code",
     COLOR_AUG_CODE=(
         "Sequential(["
@@ -14,26 +14,20 @@ INPUT = dict(
         # Sometimes(0.5, CropAndPad(percent=(-0.05, 0.1))),
         # Sometimes(0.5, Affine(scale=(1.0, 1.2))),
         "Sometimes(0.5, CoarseDropout( p=0.2, size_percent=0.05) ),"
-        "Sometimes(0.4, GaussianBlur((0., 3.))),"
-        "Sometimes(0.3, pillike.EnhanceSharpness(factor=(0., 50.))),"
-        "Sometimes(0.3, pillike.EnhanceContrast(factor=(0.2, 50.))),"
-        "Sometimes(0.5, pillike.EnhanceBrightness(factor=(0.1, 6.))),"
-        "Sometimes(0.3, pillike.EnhanceColor(factor=(0., 20.))),"
+        "Sometimes(0.5, GaussianBlur(1.2*np.random.rand())),"
         "Sometimes(0.5, Add((-25, 25), per_channel=0.3)),"
         "Sometimes(0.3, Invert(0.2, per_channel=True)),"
         "Sometimes(0.5, Multiply((0.6, 1.4), per_channel=0.5)),"
         "Sometimes(0.5, Multiply((0.6, 1.4))),"
-        "Sometimes(0.1, AdditiveGaussianNoise(scale=10, per_channel=True)),"
-        "Sometimes(0.5, iaa.contrast.LinearContrast((0.5, 2.2), per_channel=0.3)),"
-        "Sometimes(0.5, Grayscale(alpha=(0.0, 1.0))),"  # maybe remove for det
-        "], random_order=True)"
-        # cosy+aae
+        "Sometimes(0.5, LinearContrast((0.5, 2.2), per_channel=0.3))"
+        "], random_order = False)"
+        # aae
     ),
 )
 
 SOLVER = dict(
     IMS_PER_BATCH=24,
-    TOTAL_EPOCHS=40,  # 10
+    TOTAL_EPOCHS=40,  # 30
     LR_SCHEDULER_NAME="flat_and_anneal",
     ANNEAL_METHOD="cosine",  # "cosine"
     ANNEAL_POINT=0.72,
@@ -44,17 +38,10 @@ SOLVER = dict(
 )
 
 DATASETS = dict(
-    #TRAIN=("ycbv_train_real", "ycbv_random_texture_train_pbr"),
-    TRAIN=("ycbv_random_texture_train_pbr",),
-    TEST=("ycbv_test",),
-    DET_FILES_TEST=("datasets/BOP_DATASETS/ycbv_random_texture/test/test_bboxes/yolox_x_640_ycbv_real_pbr_ycbv_bop_test.json",),
-    SYM_OBJS=[
-        "024_bowl",
-        "036_wood_block",
-        "051_large_clamp",
-        "052_extra_large_clamp",
-        "061_foam_brick",
-    ],  # used for custom evalutor
+    TRAIN=("tless_random_texture_train_pbr",),
+    TEST=("tless_bop_test_primesense",),
+    DET_FILES_TEST=("datasets/BOP_DATASETS/tless/test/test_bboxes/yolox_x_640_tless_real_pbr_tless_bop_test.json",),
+    DET_TOPK_PER_OBJ=100,
 )
 
 DATALOADER = dict(
@@ -71,7 +58,7 @@ MODEL = dict(
     POSE_NET=dict(
         NAME="GDRN_double_mask",
         XYZ_ONLINE=True,
-        NUM_CLASSES=21,
+        NUM_CLASSES=30,
         BACKBONE=dict(
             FREEZE=False,
             PRETRAINED="timm",
@@ -133,11 +120,19 @@ MODEL = dict(
 )
 
 VAL = dict(
-    DATASET_NAME="ycbv",
-    SPLIT_TYPE="",
+    DATASET_NAME="tless",
     SCRIPT_PATH="lib/pysixd/scripts/eval_pose_results_more.py",
     TARGETS_FILENAME="test_targets_bop19.json",
-    ERROR_TYPES="vsd,mspd,mssd",
+    ERROR_TYPES="mspd,mssd,vsd,ad,reS,teS",
+    #RENDERER_TYPE="cpp",  # cpp, python, egl
+    RENDERER_TYPE="python",  # cpp, python, egl
+    SPLIT="test",
+    SPLIT_TYPE="",
+    N_TOP=-1,  # SISO: 1, VIVO: -1 (for LINEMOD, 1/-1 are the same)
+    EVAL_CACHED=False,  # if the predicted poses have been saved
+    SCORE_ONLY=False,  # if the errors have been calculated
+    EVAL_PRINT_ONLY=False,  # if the scores/recalls have been saved
+    EVAL_PRECISION=False,  # use precision or recall
     USE_BOP=True,  # whether to use bop toolkit
 )
 

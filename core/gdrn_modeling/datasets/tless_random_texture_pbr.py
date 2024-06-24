@@ -1,22 +1,23 @@
-import hashlib
 import logging
+import hashlib
 import os
 import os.path as osp
 import sys
-import time
-from collections import OrderedDict
-import mmcv
-import numpy as np
-from tqdm import tqdm
-from transforms3d.quaternions import mat2quat, quat2mat
-from detectron2.data import DatasetCatalog, MetadataCatalog
-from detectron2.structures import BoxMode
 
 cur_dir = osp.dirname(osp.abspath(__file__))
 PROJ_ROOT = osp.normpath(osp.join(cur_dir, "../../.."))
 sys.path.insert(0, PROJ_ROOT)
+import time
+from collections import OrderedDict
+
+import mmcv
+import numpy as np
+from tqdm import tqdm
+from transforms3d.quaternions import mat2quat, quat2mat
 
 import ref
+from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.structures import BoxMode
 from lib.pysixd import inout, misc
 from lib.utils.mask_utils import binary_mask_to_rle, cocosegm2mask
 from lib.utils.utils import dprint, iprint, lazy_property
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 DATASETS_ROOT = osp.normpath(osp.join(PROJ_ROOT, "datasets"))
 
 
-class LM_PBR_Dataset:
+class TLESS_RANDOM_TEXTURE_PBR_Dataset:
     def __init__(self, data_cfg):
         """
         Set with_depth and with_masks default to True,
@@ -36,33 +37,31 @@ class LM_PBR_Dataset:
         self.name = data_cfg["name"]
         self.data_cfg = data_cfg
 
-        self.objs = data_cfg["objs"]  # selected objects
+        self.objs = data_cfg["objs"]  # selected objs
 
-        self.dataset_root = data_cfg.get("dataset_root", osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/train_pbr"))
-        self.xyz_root = data_cfg.get("xyz_root", osp.join(self.dataset_root, "xyz_crop"))
+        self.dataset_root = data_cfg.get("dataset_root", osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr"))
         assert osp.exists(self.dataset_root), self.dataset_root
-        self.models_root = data_cfg["models_root"]  # BOP_DATASETS/lm/models
+        self.xyz_root = data_cfg.get("xyz_root", osp.join(self.dataset_root, "xyz_crop"))
+        self.models_root = data_cfg["models_root"]  # BOP_DATASETS/tless/models_cad
         self.scale_to_meter = data_cfg["scale_to_meter"]  # 0.001
 
         self.with_masks = data_cfg["with_masks"]
         self.with_depth = data_cfg["with_depth"]
 
-        self.height = data_cfg["height"]  # 480
-        self.width = data_cfg["width"]  # 640
+        self.height = data_cfg["height"]
+        self.width = data_cfg["width"]
 
-        self.cache_dir = data_cfg.get("cache_dir", osp.join(PROJ_ROOT, ".cache"))  # .cache
-        self.use_cache = data_cfg.get("use_cache", True)
         self.num_to_load = data_cfg["num_to_load"]  # -1
         self.filter_invalid = data_cfg.get("filter_invalid", True)
-        ##################################################
+        self.use_cache = data_cfg.get("use_cache", True)
+        self.cache_dir = data_cfg.get("cache_dir", osp.join(PROJ_ROOT, ".cache"))  # .cache
 
         # NOTE: careful! Only the selected objects
-        self.cat_ids = [cat_id for cat_id, obj_name in ref.lm_full.id2obj.items() if obj_name in self.objs]
-        # map selected objs to [0, num_objs-1]
+        self.cat_ids = [cat_id for cat_id, obj_name in ref.tless.id2obj.items() if obj_name in self.objs]
+        # map selected objs to [0, num_objs)
         self.cat2label = {v: i for i, v in enumerate(self.cat_ids)}  # id_map
         self.label2cat = {label: cat for cat, label in self.cat2label.items()}
         self.obj2label = OrderedDict((obj, obj_id) for obj_id, obj in enumerate(self.objs))
-        ##########################################################
 
         self.scenes = [f"{i:06d}" for i in range(50)]
 
@@ -86,10 +85,7 @@ class LM_PBR_Dataset:
                 )
             ).encode("utf-8")
         ).hexdigest()
-        cache_path = osp.join(
-            self.cache_dir,
-            "dataset_dicts_{}_{}.pkl".format(self.name, hashed_file_name),
-        )
+        cache_path = osp.join(self.cache_dir, "dataset_dicts_{}_{}.pkl".format(self.name, hashed_file_name))
 
         if osp.exists(cache_path) and self.use_cache:
             logger.info("load cached dataset dicts from {}".format(cache_path))
@@ -98,10 +94,12 @@ class LM_PBR_Dataset:
         t_start = time.perf_counter()
 
         logger.info("loading dataset dicts: {}".format(self.name))
+
+        dataset_dicts = []
         self.num_instances_without_valid_segmentation = 0
         self.num_instances_without_valid_box = 0
-        dataset_dicts = []  # ######################################################
         # it is slow because of loading and converting masks to rle
+
         for scene in tqdm(self.scenes):
             scene_id = int(scene)
             scene_root = osp.join(self.dataset_root, scene)
@@ -150,16 +148,14 @@ class LM_PBR_Dataset:
 
                     bbox_visib = gt_info_dict[str_im_id][anno_i]["bbox_visib"]
                     bbox_obj = gt_info_dict[str_im_id][anno_i]["bbox_obj"]
+
                     x1, y1, w, h = bbox_visib
                     if self.filter_invalid:
                         if h <= 1 or w <= 1:
                             self.num_instances_without_valid_box += 1
                             continue
 
-                    mask_file = osp.join(
-                        scene_root,
-                        "mask/{:06d}_{:06d}.png".format(int_im_id, anno_i),
-                    )
+                    mask_file = osp.join(scene_root, "mask/{:06d}_{:06d}.png".format(int_im_id, anno_i))
                     mask_visib_file = osp.join(
                         scene_root,
                         "mask_visib/{:06d}_{:06d}.png".format(int_im_id, anno_i),
@@ -168,9 +164,8 @@ class LM_PBR_Dataset:
                     assert osp.exists(mask_visib_file), mask_visib_file
                     # load mask visib
                     mask_single = mmcv.imread(mask_visib_file, "unchanged")
-                    mask_single = mask_single.astype("bool")
                     area = mask_single.sum()
-                    if area < 30:  # filter out too small or nearly invisible instances
+                    if area <= 64:  # filter out too small or nearly invisible instances
                         self.num_instances_without_valid_segmentation += 1
                         continue
                     mask_rle = binary_mask_to_rle(mask_single, compressed=True)
@@ -186,6 +181,8 @@ class LM_PBR_Dataset:
                         self.xyz_root,
                         f"{scene_id:06d}/{int_im_id:06d}_{anno_i:06d}-xyz.pkl",
                     )
+                    # assert osp.exists(xyz_path), xyz_path
+
                     inst = {
                         "category_id": cur_label,  # 0-based label
                         "bbox": bbox_visib,
@@ -196,7 +193,7 @@ class LM_PBR_Dataset:
                         "trans": t,
                         "centroid_2d": proj,  # absolute (cx, cy)
                         "segmentation": mask_rle,
-                        "mask_full": mask_full_rle,
+                        "mask_full": mask_full_rle,  # TODO: load as mask_full, rle
                         "visib_fract": visib_fract,
                         "xyz_path": xyz_path,
                     }
@@ -223,7 +220,7 @@ class LM_PBR_Dataset:
                 "Filtered out {} instances without valid box. "
                 "There might be issues in your dataset generation process.".format(self.num_instances_without_valid_box)
             )
-        ##########################################################################
+        ##########################
         if self.num_to_load > 0:
             self.num_to_load = min(int(self.num_to_load), len(dataset_dicts))
             dataset_dicts = dataset_dicts[: self.num_to_load]
@@ -252,20 +249,19 @@ class LM_PBR_Dataset:
         models = []
         for obj_name in self.objs:
             model = inout.load_ply(
-                osp.join(
-                    self.models_root,
-                    f"obj_{ref.lm_full.obj2id[obj_name]:06d}.ply",
-                ),
+                osp.join(self.models_root, f"obj_{ref.tless.obj2id[obj_name]:06d}.ply"),
                 vertex_scale=self.scale_to_meter,
             )
             # NOTE: the bbox3d_and_center is not obtained from centered vertices
             # for BOP models, not a big problem since they had been centered
             model["bbox3d_and_center"] = misc.get_bbox3d_and_center(model["pts"])
-
             models.append(model)
         logger.info("cache models to {}".format(cache_path))
         mmcv.dump(models, cache_path, protocol=4)
         return models
+
+    def __len__(self):
+        return self.num_to_load
 
     def image_aspect_ratio(self):
         return self.width / self.height  # 4/3
@@ -274,7 +270,7 @@ class LM_PBR_Dataset:
 ########### register datasets ############################################################
 
 
-def get_lm_metadata(obj_names, ref_key):
+def get_tless_metadata(obj_names, ref_key):
     """task specific metadata."""
 
     data_ref = ref.__dict__[ref_key]
@@ -295,67 +291,52 @@ def get_lm_metadata(obj_names, ref_key):
     meta = {"thing_classes": obj_names, "sym_infos": cur_sym_infos}
     return meta
 
-lm_model_root = "BOP_DATASETS/lm/models/"
-lmo_model_root = "BOP_DATASETS/lmo/models/"
+
+tless_model_root = "BOP_DATASETS/tless/models_cad/"
 ################################################################################
 
-LM_OCC_OBJECTS = [
-    "ape",
-    "can",
-    "cat",
-    "driller",
-    "duck",
-    "eggbox",
-    "glue",
-    "holepuncher",
-]
 
-SPLITS_LM_PBR = dict(
-    lmo_random_texture_no_bump_train=dict(
-        name="lmo_random_texture_no_bump_train",
-        objs=LM_OCC_OBJECTS,  # selected objects
-        dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/train_pbr"),
-        models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/models"),
-        xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/train_pbr/xyz_crop"),
+SPLITS_TLESS_PBR = dict(
+    tless_train_pbr=dict(
+        name="tless_random_texture_train_pbr",
+        objs=ref.tless.objects,  # selected objects
+        dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr"),
+        models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/models_cad"),
+        xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr/xyz_crop"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=480,
-        width=640,
-        cache_dir=osp.join(PROJ_ROOT, ".cache"),
+        height=540,
+        width=720,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
-        ref_key="lmo_random_texture_no_bump_full",
+        ref_key="tless",
     ),
 )
 
-# lmo single objs
-for obj in ref.lmo_full.objects:
-    for split in ["train"]:
-        name = "lmo_pbr_{}_{}".format(obj, split)
-        if split in ["train"]:
-            filter_invalid = True
-        else:
-            raise ValueError("{}".format(split))
-        if name not in SPLITS_LM_PBR:
-            SPLITS_LM_PBR[name] = dict(
+# single obj splits
+for obj in ref.tless.objects:
+    for split in ["train_pbr"]:
+        name = "tless_random_texture_{}_{}".format(obj, split)
+        if name not in SPLITS_TLESS_PBR:
+            SPLITS_TLESS_PBR[name] = dict(
                 name=name,
                 objs=[obj],  # only this obj
-                dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/train_pbr"),
-                models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/models"),
-                xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/lmo_random_texture_no_bump/train_pbr/xyz_crop"),
+                dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr"),
+                models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/models_cad"),
+                xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr/xyz_crop"),
                 scale_to_meter=0.001,
                 with_masks=True,  # (load masks but may not use it)
                 with_depth=True,  # (load depth path here, but may not use it)
-                height=480,
-                width=640,
-                cache_dir=osp.join(PROJ_ROOT, ".cache"),
+                height=540,
+                width=720,
                 use_cache=True,
                 num_to_load=-1,
-                filter_invalid=filter_invalid,
-                ref_key="lmo_random_texture_no_bump_full",
+                filter_invalid=True,
+                ref_key="tless",
             )
+
 
 def register_with_name_cfg(name, data_cfg=None):
     """Assume pre-defined datasets live in `./datasets`.
@@ -367,24 +348,25 @@ def register_with_name_cfg(name, data_cfg=None):
             data_cfg can be set in cfg.DATA_CFG.name
     """
     dprint("register dataset: {}".format(name))
-    if name in SPLITS_LM_PBR:
-        used_cfg = SPLITS_LM_PBR[name]
+    if name in SPLITS_TLESS_PBR:
+        used_cfg = SPLITS_TLESS_PBR[name]
     else:
         assert data_cfg is not None, f"dataset name {name} is not registered"
         used_cfg = data_cfg
-    DatasetCatalog.register(name, LM_PBR_Dataset(used_cfg))
+    DatasetCatalog.register(name, TLESS_RANDOM_TEXTURE_PBR_Dataset(used_cfg))
     # something like eval_types
     MetadataCatalog.get(name).set(
+        id="tless_random_texture",  # NOTE: for pvnet to determine module
         ref_key=used_cfg["ref_key"],
         objs=used_cfg["objs"],
         eval_error_types=["ad", "rete", "proj"],
         evaluator_type="bop",
-        **get_lm_metadata(obj_names=used_cfg["objs"], ref_key=used_cfg["ref_key"]),
+        **get_tless_metadata(obj_names=used_cfg["objs"], ref_key=used_cfg["ref_key"]),
     )
 
 
 def get_available_datasets():
-    return list(SPLITS_LM_PBR.keys())
+    return list(SPLITS_TLESS_PBR.keys())
 
 
 #### tests ###############################################
@@ -432,22 +414,22 @@ def test_vis():
                 labels=labels[_i : _i + 1],
             )
             img_vis_kpts2d = misc.draw_projected_box3d(img_vis.copy(), kpts_2d[_i])
-            xyz_path = annos[_i]["xyz_path"]
-            xyz_info = mmcv.load(xyz_path)
-            x1, y1, x2, y2 = xyz_info["xyxy"]
-            xyz_crop = xyz_info["xyz_crop"].astype(np.float32)
-            xyz = np.zeros((imH, imW, 3), dtype=np.float32)
-            xyz[y1 : y2 + 1, x1 : x2 + 1, :] = xyz_crop
-            xyz_show = get_emb_show(xyz)
-            xyz_crop_show = get_emb_show(xyz_crop)
-            img_xyz = img.copy() / 255.0
-            mask_xyz = ((xyz[:, :, 0] != 0) | (xyz[:, :, 1] != 0) | (xyz[:, :, 2] != 0)).astype("uint8")
-            fg_idx = np.where(mask_xyz != 0)
-            img_xyz[fg_idx[0], fg_idx[1], :] = xyz_show[fg_idx[0], fg_idx[1], :3]
-            img_xyz_crop = img_xyz[y1 : y2 + 1, x1 : x2 + 1, :]
-            img_vis_crop = img_vis[y1 : y2 + 1, x1 : x2 + 1, :]
-            # diff mask
-            diff_mask_xyz = np.abs(masks[_i] - mask_xyz)[y1 : y2 + 1, x1 : x2 + 1]
+            # xyz_path = annos[_i]["xyz_path"]
+            # xyz_info = mmcv.load(xyz_path)
+            # x1, y1, x2, y2 = xyz_info["xyxy"]
+            # xyz_crop = xyz_info["xyz_crop"].astype(np.float32)
+            # xyz = np.zeros((imH, imW, 3), dtype=np.float32)
+            # xyz[y1 : y2 + 1, x1 : x2 + 1, :] = xyz_crop
+            # xyz_show = get_emb_show(xyz)
+            # xyz_crop_show = get_emb_show(xyz_crop)
+            # img_xyz = img.copy() / 255.0
+            # mask_xyz = ((xyz[:, :, 0] != 0) | (xyz[:, :, 1] != 0) | (xyz[:, :, 2] != 0)).astype("uint8")
+            # fg_idx = np.where(mask_xyz != 0)
+            # img_xyz[fg_idx[0], fg_idx[1], :] = xyz_show[fg_idx[0], fg_idx[1], :3]
+            # img_xyz_crop = img_xyz[y1 : y2 + 1, x1 : x2 + 1, :]
+            # img_vis_crop = img_vis[y1 : y2 + 1, x1 : x2 + 1, :]
+            # # diff mask
+            # diff_mask_xyz = np.abs(masks[_i] - mask_xyz)[y1 : y2 + 1, x1 : x2 + 1]
 
             grid_show(
                 [
@@ -455,26 +437,25 @@ def test_vis():
                     img_vis[:, :, [2, 1, 0]],
                     img_vis_kpts2d[:, :, [2, 1, 0]],
                     depth,
-                    # xyz_show,
-                    diff_mask_xyz,
-                    xyz_crop_show,
-                    img_xyz[:, :, [2, 1, 0]],
-                    img_xyz_crop[:, :, [2, 1, 0]],
-                    img_vis_crop,
+                    # diff_mask_xyz,
+                    # xyz_crop_show,
+                    # img_xyz[:, :, [2, 1, 0]],
+                    # img_xyz_crop[:, :, [2, 1, 0]],
+                    # img_vis_crop,
                 ],
                 [
                     "img",
                     "vis_img",
                     "img_vis_kpts2d",
                     "depth",
-                    "diff_mask_xyz",
-                    "xyz_crop_show",
-                    "img_xyz",
-                    "img_xyz_crop",
-                    "img_vis_crop",
+                    # "diff_mask_xyz",
+                    # "xyz_crop_show",
+                    # "img_xyz",
+                    # "img_xyz_crop",
+                    # "img_vis_crop",
                 ],
-                row=3,
-                col=3,
+                row=2,
+                col=2,
             )
 
 
