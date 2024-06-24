@@ -55,7 +55,6 @@ _DSET_MOD_NAMES = [
     "itodd_d2",
     "itodd_bop_test",
     "lmo_pbr_random_texture",
-    "lmo_5r_1o_pbr",
     "ycb_ichores_pbr",
     "ycb_ichores_test"
 ]
