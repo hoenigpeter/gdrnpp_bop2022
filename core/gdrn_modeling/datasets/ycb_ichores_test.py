@@ -323,8 +323,8 @@ def register_with_name_cfg(name, data_cfg=None):
             data_cfg can be set in cfg.DATA_CFG.name
     """
     dprint("register dataset: {}".format(name))
-    if name in SPLITS_YCB_ICHORES_PBR:
-        used_cfg = SPLITS_YCB_ICHORES_PBR[name]
+    if name in SPLITS_YCB_ICHORES_TEST:
+        used_cfg = SPLITS_YCB_ICHORES_TEST[name]
     else:
         assert data_cfg is not None, f"dataset name {name} is not registered"
         used_cfg = data_cfg
@@ -341,7 +341,7 @@ def register_with_name_cfg(name, data_cfg=None):
 
 
 def get_available_datasets():
-    return list(SPLITS_YCB_ICHORES_PBR.keys())
+    return list(SPLITS_YCB_ICHORES_TEST.keys())
 
 
 #### tests ###############################################
