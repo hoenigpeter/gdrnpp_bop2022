@@ -297,7 +297,7 @@ tless_model_root = "BOP_DATASETS/tless/models_cad/"
 
 
 SPLITS_TLESS_PBR = dict(
-    tless_train_pbr=dict(
+    tless_random_texture_train_pbr=dict(
         name="tless_random_texture_train_pbr",
         objs=ref.tless.objects,  # selected objects
         dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/tless_random_texture/train_pbr"),
