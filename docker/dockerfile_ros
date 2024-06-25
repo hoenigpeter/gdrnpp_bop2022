@@ -3,11 +3,18 @@ FROM nvidia/cudagl:11.3.0-devel-ubuntu20.04
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y \
-	python3-opencv ca-certificates python3-dev git wget sudo ninja-build
+	python3-opencv \
+	ca-certificates \
+	python3-dev \
+	git \
+	wget \
+	sudo \
+	ninja-build
+	
 RUN ln -sv /usr/bin/python3 /usr/bin/python
 
 RUN wget https://bootstrap.pypa.io/get-pip.py && \
-	python3 get-pip.py && \
+	python3 get-pip.py "pip<24.1" && \
 	rm get-pip.py
 
 # install lsb-release and curl
@@ -24,7 +31,9 @@ RUN sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) 
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 
 RUN pip install tensorboard cmake onnx   # cmake from apt-get is too old
+
 RUN pip install setuptools==69.5.1
+
 RUN pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
 RUN pip install 'git+https://github.com/facebookresearch/fvcore'
 
