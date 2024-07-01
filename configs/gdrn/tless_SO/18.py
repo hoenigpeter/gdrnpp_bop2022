@@ -1,0 +1,3 @@
+_base_ = "./1.py"
+OUTPUT_DIR = "output/gdrn/tless_SO/gdrnpp_tless/18"
+DATASETS = dict(TRAIN=("tless_18_train_pbr",))
