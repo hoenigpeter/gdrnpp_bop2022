@@ -32,7 +32,7 @@ RUN ln -sv /usr/bin/python3 /usr/bin/python
 
 # Install pip
 RUN wget https://bootstrap.pypa.io/get-pip.py && \
-    python3 get-pip.py && \
+    python3 get-pip.py "pip<24.1" && \
     rm get-pip.py
 
 # Install required Python packages
