@@ -315,6 +315,29 @@ SPLITS_KEYPOSE_PBR = dict(
     ),
 )
 
+# single obj splits
+for obj in ref.keypose_random_texture.objects:
+    for split in ["train_pbr"]:
+        name = "keypose_random_texture_{}_{}".format(obj, split)
+        if name not in SPLITS_KEYPOSE_PBR:
+            SPLITS_KEYPOSE_PBR[name] = dict(
+                name=name,
+                objs=[obj],  # only this obj
+                dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_random_texture/train_pbr"),
+                models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_random_texture/models"),
+                xyz_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_random_texture/train_pbr/xyz_crop"),
+                scale_to_meter=0.001,
+                with_masks=True,  # (load masks but may not use it)
+                with_depth=True,  # (load depth path here, but may not use it)
+                height=720,
+                width=1280,
+                use_cache=True,
+                num_to_load=-1,
+                filter_invalid=True,
+                ref_key="keypose_random_texture",
+            )
+
+
 # # single obj splits
 # for obj in ref.keypose.objects:
 #     for split in ["train_pbr"]:
