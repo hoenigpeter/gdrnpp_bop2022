@@ -2,15 +2,17 @@ FROM nvidia/cudagl:11.3.0-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 	python3-opencv \
 	ca-certificates \
 	python3-dev \
 	git \
 	wget \
 	sudo \
-	ninja-build
-	
+	ninja-build \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
 RUN ln -sv /usr/bin/python3 /usr/bin/python
 
 RUN wget https://bootstrap.pypa.io/get-pip.py && \
@@ -18,8 +20,7 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
 	rm get-pip.py
 
 # install lsb-release and curl
-RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     lsb-release \
     curl \
 	cmake \
