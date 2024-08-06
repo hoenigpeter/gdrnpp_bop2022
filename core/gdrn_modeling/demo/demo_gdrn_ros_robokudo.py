@@ -53,7 +53,7 @@ class GDRN_ROS:
     When using the robokudo_msgs, as the callback function for the action server
     """
     def estimate_pose(self, req):
-        print("request detection...")
+        #print("request detection...")
         start_time = time.time()
 
         # === IN ===
