@@ -314,7 +314,7 @@ def get_keypose_metadata(obj_names, ref_key):
 
 SPLITS_KEYPOSE = dict(
     keypose_test=dict(
-        name="keypose_bop_test_primesense",
+        name="keypose_test",
         dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_transparent/test"),
         models_root=ref.keypose_transparent.model_dir,
         objs=ref.keypose_transparent.objects,  # selected objects
@@ -331,6 +331,28 @@ SPLITS_KEYPOSE = dict(
         ref_key="keypose_transparent",
     )
 )
+
+# single obj splits
+for obj in ref.keypose_transparent.objects:
+        name = "keypose_{}_test".format(obj)
+        select_objs = [obj]
+        if name not in SPLITS_KEYPOSE:
+            SPLITS_KEYPOSE[name] = dict(
+                name=name,
+                objs=[obj],  # only this obj
+                ann_file=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_transparent/test_targets_bop19.json"),
+                dataset_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_transparent/test"),
+                models_root=osp.join(DATASETS_ROOT, "BOP_DATASETS/keypose_transparent/models"),
+                scale_to_meter=0.001,
+                with_masks=True,  # (load masks but may not use it)
+                with_depth=True,  # (load depth path here, but may not use it)
+                height=720,
+                width=1280,
+                use_cache=True,
+                num_to_load=-1,
+                filter_invalid=True,
+                ref_key="keypose_transparent",
+            )
 
 # # single objs (num_class is from all objs)
 # for obj in ref.keypose.objects:

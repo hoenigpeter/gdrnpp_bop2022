@@ -48,8 +48,8 @@ SOLVER = dict(
 
 DATASETS = dict(
     TRAIN=("keypose_transparent_14_train_pbr",),
-    TEST=("keypose_test",),
-    DET_FILES_TEST=("datasets/BOP_DATASETS/tless/test/test_bboxes/scene_gt_bb_dummy.json",),
+    TEST=("keypose_14_test",),
+    DET_FILES_TEST=("datasets/BOP_DATASETS/keypose_transparent/test/test_bboxes/scene_gt_bb_dummy.json",),
     DET_TOPK_PER_OBJ=100,
 )
 

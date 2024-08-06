@@ -162,7 +162,8 @@ class KEYPOSE_PBR_Dataset:
                     )
                     assert osp.exists(mask_file), mask_file
                     assert osp.exists(mask_visib_file), mask_visib_file
-                    # load mask visib
+                    # load mask 
+                    print(mask_visib_file)
                     mask_single = mmcv.imread(mask_visib_file, "unchanged")
                     area = mask_single.sum()
                     if area <= 64:  # filter out too small or nearly invisible instances
