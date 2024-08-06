@@ -47,7 +47,7 @@ class GDRN_ROS:
                                                         execute_cb=self.estimate_pose, 
                                                         auto_start=False)
             self.server.start()
-            print("Pose Estimation with GDRNet is ready.")
+            print("Pose Estimation with GDRNPP is ready.")
     
     """
     When using the robokudo_msgs, as the callback function for the action server
@@ -77,7 +77,6 @@ class GDRN_ROS:
             depth.encoding = "mono16"
             depth_img = CvBridge().imgmsg_to_cv2(depth, "mono16")
             depth_img = depth_img/1000
-            print(depth_img)
         except CvBridgeError as e:
             print(e)
 
@@ -88,9 +87,6 @@ class GDRN_ROS:
             if name == "036_wood_block":
                 continue
             score = np.float32(scores[name])
-            print("obj_id: ", name)
-            print("conf_score: ", score)
-            print("bbox: ", roi)
 
             obj_id = -1
             for number in self.gdrn_predictor.objs:
@@ -122,9 +118,6 @@ class GDRN_ROS:
             t = poses[obj_name][ 0:3,3:4 ].ravel()
 
             rot_quat = tf.transformations.quaternion_from_matrix(R_0)
-            print("R: ", R_0)
-            print("t: ", t)
-            print()
 
             br = tf.TransformBroadcaster()
             br.sendTransform((poses[obj_name][0][3], poses[obj_name][1][3], poses[obj_name][2][3]),
@@ -153,7 +146,7 @@ class GDRN_ROS:
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        print('Execution time:', elapsed_time, 'seconds')
+        #print('Execution time:', elapsed_time, 'seconds')
         self.server.set_succeeded(response)
 
 def parse_opt():
