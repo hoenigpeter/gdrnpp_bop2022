@@ -32,8 +32,8 @@ class GDRN_ROS:
             intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
             self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
             self.gdrn_predictor = GdrnPredictor(
-                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + model_file + "/" + model_file +"_inference.py"),
-                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrn/" + model_file + "/gdrnpp_" + model_file + "_weights.pth"),
+                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + model_file + "/" + model_file + "_inference.py"),
+                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrn/gdrnpp_" + model_file + "_weights.pth"),
                 camera_intrinsics=intrinsics,
                 path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/" + model_file + "/models"),
                 model_string=model_file
