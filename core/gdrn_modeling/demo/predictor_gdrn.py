@@ -327,7 +327,7 @@ class GdrnPredictor():
         
     def publish_mesh_marker(self, cls_name, R_est, t_est):
         from visualization_msgs.msg import Marker
-        vis_pub = rospy.Publisher("/gdrnet_meshes", Marker, latch=True)
+        vis_pub = rospy.Publisher("/gdrnet_meshes", Marker, latch=True, queue_size=10)
         model = self.ren_models[self.cls_names.index(cls_name)]
         model_vertices = np.array(model.vertices)
         model_colors = model.colors

@@ -1,15 +1,15 @@
 _base_ = ["../../_base_/gdrn_base.py"]
 
-OUTPUT_DIR = "output/gdrn/tless_SO/gdrnpp_tless/1"
+OUTPUT_DIR = "output/gdrn/gdrnpp_keypose_random_texture_6"
 INPUT = dict(
     DZI_PAD_SCALE=1.5,
     TRUNCATE_FG=True,
     CHANGE_BG_PROB=0.5,
     COLOR_AUG_PROB=0.8,
-    MIN_SIZE_TRAIN=540,
-    MAX_SIZE_TRAIN=720,
-    MIN_SIZE_TEST=540,
-    MAX_SIZE_TEST=720,
+    MIN_SIZE_TRAIN=720,
+    MAX_SIZE_TRAIN=1280,
+    MIN_SIZE_TEST=720,
+    MAX_SIZE_TEST=1280,
     COLOR_AUG_TYPE="code",
     COLOR_AUG_CODE=(
         "Sequential(["
@@ -35,8 +35,8 @@ INPUT = dict(
 )
 
 SOLVER = dict(
-    IMS_PER_BATCH=36,
-    TOTAL_EPOCHS=100,
+    IMS_PER_BATCH=8,
+    TOTAL_EPOCHS=100,  # 30
     LR_SCHEDULER_NAME="flat_and_anneal",
     ANNEAL_METHOD="cosine",  # "cosine"
     ANNEAL_POINT=0.72,
@@ -47,10 +47,9 @@ SOLVER = dict(
 )
 
 DATASETS = dict(
-    TRAIN=("tless_1_train_pbr",),
-    TEST=("tless_bop_test_primesense",),
-    # AP        AP50    AP75    AR      inf.time
-    DET_FILES_TEST=("datasets/BOP_DATASETS/tless/test/test_bboxes/yolox_x_640_tless_pbr_tless_bop_test.json",),
+    TRAIN=("keypose_random_texture_6_train_pbr",),
+    TEST=("keypose_6_test",),
+    DET_FILES_TEST=("datasets/BOP_DATASETS/keypose_transparent/test/test_bboxes/scene_gt_bb_dummy.json",),
     DET_TOPK_PER_OBJ=100,
 )
 
@@ -87,6 +86,9 @@ MODEL = dict(
                 in_dim=1024,  # this is num out channels of backbone conv feature
             ),
             NUM_REGIONS=64,
+            XYZ_CLASS_AWARE=True,
+            MASK_CLASS_AWARE=True,
+            REGION_CLASS_AWARE=True,
         ),
         PNP_NET=dict(
             INIT_CFG=dict(norm="GN", act="gelu"),
@@ -126,10 +128,11 @@ MODEL = dict(
 )
 
 VAL = dict(
-    DATASET_NAME="tless",
+    DATASET_NAME="keypose",
     SCRIPT_PATH="lib/pysixd/scripts/eval_pose_results_more.py",
     TARGETS_FILENAME="test_targets_bop19.json",
     ERROR_TYPES="mspd,mssd,vsd,ad,reS,teS",
+    #RENDERER_TYPE="cpp",  # cpp, python, egl
     RENDERER_TYPE="python",  # cpp, python, egl
     SPLIT="test",
     SPLIT_TYPE="",

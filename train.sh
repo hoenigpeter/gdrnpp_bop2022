@@ -12,4 +12,14 @@
 ./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/17.py 0
 ./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/18.py 0
 ./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/19.py 0
-
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/20.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/21.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/22.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/23.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/24.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/25.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/26.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/27.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/28.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/29.py 0
+./core/gdrn_modeling/train_gdrn.sh configs/gdrn/tless_SO/30.py 0
