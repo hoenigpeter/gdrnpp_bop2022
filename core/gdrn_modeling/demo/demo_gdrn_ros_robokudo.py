@@ -28,15 +28,15 @@ from lib.render_vispy.renderer import RendererROS
 import queue
 
 class GDRN_ROS:
-    def __init__(self, renderer_request_queue, renderer_result_queue, model_file):
+    def __init__(self, renderer_request_queue, renderer_result_queue, dataset_name):
             intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
             self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
             self.gdrn_predictor = GdrnPredictor(
-                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + model_file + "/" + model_file + "_inference.py"),
-                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrnpp_" + model_file + "_weights.pth"),
+                config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + dataset_name + "/" + dataset_name + "_inference.py"),
+                ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrnpp_" + dataset_name + "_weights.pth"),
                 camera_intrinsics=intrinsics,
-                path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/" + model_file + "/models"),
-                model_string=model_file
+                path_to_obj_models=osp.join(PROJ_ROOT,"datasets/BOP_DATASETS/" + dataset_name + "/models"),
+                model_string=dataset_name
             )
 
             self.renderer_request_queue = renderer_request_queue
@@ -151,7 +151,7 @@ class GDRN_ROS:
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_file', type=str, default='ycbv', help='model path name')
+    parser.add_argument('--dataset_name', type=str, default='ycbv', help='name of the dataset')
     opt = parser.parse_args()
     return opt
 
