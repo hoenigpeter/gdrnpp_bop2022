@@ -93,7 +93,9 @@ class GDRN_ROS:
                 if self.gdrn_predictor.objs[number] == name:
                     obj_id = int(number) 
                     break
+                
             assert obj_id > 0
+
             ymin = roi.x_offset
             xmin = roi.y_offset
             ymax = ymin + roi.width

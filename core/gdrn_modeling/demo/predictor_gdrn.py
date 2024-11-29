@@ -130,7 +130,7 @@ class GdrnPredictor():
     def set_eval_model(self, model_lite, args, cfg):
         model_lite.set_my_env(args, cfg)
 
-        model, optimizer = eval(cfg.MODEL.POSE_NET.NAME).build_model_optimizer(cfg, is_test=args.eval_only)
+        model, _ = eval(cfg.MODEL.POSE_NET.NAME).build_model_optimizer(cfg, is_test=True)
 
         MyCheckpointer(model, save_dir=cfg.OUTPUT_DIR, prefix_to_remove="_module.").resume_or_load(
                 cfg.MODEL.WEIGHTS, resume=args.resume
