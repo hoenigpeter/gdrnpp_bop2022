@@ -541,6 +541,9 @@ def build_model_optimizer(cfg, is_test=False):
     net_cfg = cfg.MODEL.POSE_NET
     backbone_cfg = net_cfg.BACKBONE
 
+    if is_test:
+        backbone_cfg.INIT_CFG['pretrained'] = False
+        
     params_lr_list = []
     # backbone
     init_backbone_args = copy.deepcopy(backbone_cfg.INIT_CFG)
