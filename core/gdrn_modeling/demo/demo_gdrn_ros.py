@@ -28,6 +28,8 @@ class GDRN_ROS:
     def __init__(self, renderer_request_queue, renderer_result_queue, dataset_name):
             intrinsics = np.asarray(rospy.get_param('/pose_estimator/intrinsics'))
             self.frame_id = rospy.get_param('/pose_estimator/color_frame_id')
+            self.depth_encoding = rospy.get_param('/pose_estimator/depth_encoding')
+            self.depth_scale = rospy.get_param('/pose_estimator/depth_scale')
             self.gdrn_predictor = GdrnPredictor(
                 config_file_path=osp.join(PROJ_ROOT,"configs/gdrn/" + dataset_name + "/" + dataset_name + "_inference.py"),
                 ckpt_file_path=osp.join(PROJ_ROOT,"output/gdrnpp_" + dataset_name + "_weights.pth"),
@@ -60,9 +62,9 @@ class GDRN_ROS:
             print(e)
 
         try:
-            depth.encoding = "mono16"
-            depth_img = CvBridge().imgmsg_to_cv2(depth, "mono16")
-            depth_img = depth_img/1000
+            depth.encoding = self.depth_encoding
+            depth_img = CvBridge().imgmsg_to_cv2(depth, self.depth_encoding)
+            depth_img = depth_img/int(self.depth_scale)
         except CvBridgeError as e:
             print(e)
 
