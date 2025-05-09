@@ -10,7 +10,6 @@ import pyassimp.postprocess
 
 # import optimesh
 import scipy
-from meshplex import MeshTri
 from plyfile import PlyData, PlyElement
 from scipy.spatial.distance import pdist
 from skimage import measure
@@ -332,24 +331,6 @@ class Model3D:
             else:
                 iprint("Loading {} without any colors!!".format(filename))
 
-    def _smooth_laplacian(self, vertices, faces, iterations):
-        mesh = MeshTri(vertices, faces)
-        # move interior points into average of their neighbors
-        num_neighbors = np.zeros(len(mesh.node_coords), dtype=int)
-
-        idx = mesh.edges["nodes"]
-        num_neighbors = _fast_add_at(num_neighbors, idx, np.ones(idx.shape, dtype=int))
-
-        new_points = np.zeros(mesh.node_coords.shape)
-        new_points = _fast_add_at(new_points, idx[:, 0], mesh.node_coords[idx[:, 1]])
-        new_points = _fast_add_at(new_points, idx[:, 1], mesh.node_coords[idx[:, 0]])
-
-        new_points /= num_neighbors[:, None]
-        idx = mesh.is_boundary_node
-        new_points[idx] = mesh.node_coords[idx]
-
-        return new_points
-
     # Takes sdf and extends to return a Model3D
     def load_from_tsdf(
         self,
@@ -444,9 +425,6 @@ class Model3D:
                 self.colors = 0.5 * np.ones((self.vertices.shape[0], 3))
             else:
                 self.colors = color * np.ones((self.vertices.shape[0], 3))
-
-        # if laplacian_smoothing:
-        #     self.vertices = self._smooth_laplacian(self.vertices, self.indices, 50)
 
         self.finalize(center=False)
 
