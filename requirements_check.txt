@@ -86,7 +86,6 @@ matplotlib==3.7.2
 matplotlib-inline==0.1.6
 mdurl==0.1.2
 meshio==5.3.5
-meshplex==0.19.5
 mmcv==1.7.0
 multidict==6.0.5
 mypy-extensions==1.0.0
