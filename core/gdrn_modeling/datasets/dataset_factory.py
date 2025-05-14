@@ -14,19 +14,14 @@ from core.gdrn_modeling.datasets import (
     tudl_pbr,
     tudl_bop_test,
     tless_pbr,
-    tless_random_texture_pbr,
     tless_bop_test,
     icbin_pbr,
     icbin_bop_test,
     itodd_pbr,
     itodd_d2,
     itodd_bop_test,
-    lmo_pbr_random_texture,
     ycb_ichores_pbr,
     ycb_ichores_test,
-    keypose_transparent_pbr,
-    keypose_random_texture_pbr,
-    keypose_test,
 )  # noqa
 
 cur_dir = osp.dirname(osp.abspath(__file__))
@@ -50,19 +45,14 @@ _DSET_MOD_NAMES = [
     "tudl_pbr",
     "tudl_bop_test",
     "tless_pbr",
-    "tless_random_texture_pbr",
     "tless_bop_test",
     "icbin_pbr",
     "icbin_bop_test",
     "itodd_pbr",
     "itodd_d2",
     "itodd_bop_test",
-    "lmo_pbr_random_texture",
     "ycb_ichores_pbr",
     "ycb_ichores_test",
-    "keypose_transparent_pbr",
-    "keypose_random_texture_pbr",
-    "keypose_test",
 ]
 
 logger = logging.getLogger(__name__)
